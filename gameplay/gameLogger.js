@@ -45,11 +45,15 @@ var GameLogger = Class({
         var filename = this.filenameFor(gamelog);
 
         var path = (this.gamelogDirectory + filename + this.gamelogExtension);
-        var writeSteam = fs.createWriteStream(path, "utf8");
+        var writeStream = fs.createWriteStream(path, "utf8");
         var gzip = zlib.createGzip();
 
         gzip.on("error", function(err) {
             log.error("Could not save gamelog '" + gamelog.gameName + "' - '" + gamelog.gameSession + "'.", err);
+        });
+
+        writeStream.on("error", function(err) {
+            log.error("Write stream error for gamelog '" + gamelog.gameName + "' - '" + gamelog.gameSession + "'.", err);
         });
 
         this._filenamesWritting[filename] = true;
@@ -60,7 +64,7 @@ var GameLogger = Class({
             }
         });
 
-        gzip.pipe(writeSteam);
+        gzip.pipe(writeStream);
         gzip.write(serialized);
         gzip.end();
     },

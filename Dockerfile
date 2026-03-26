@@ -9,4 +9,4 @@ RUN npm install
 EXPOSE 3000
 EXPOSE 3080
 
-CMD ["node", "./main.js"]
+CMD ["node", "--max-old-space-size=512", "./main.js"]

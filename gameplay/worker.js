@@ -50,3 +50,7 @@ process.on("message", function(message, handler) {
 process.once("uncaughtException", function(err) {
     instance.fatal(err);
 });
+
+process.on("unhandledRejection", function(reason) {
+    instance.fatal(reason instanceof Error ? reason : new Error(String(reason)));
+});

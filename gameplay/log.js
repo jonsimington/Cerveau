@@ -7,6 +7,7 @@ var os = require("os");
 var util = require("util");
 var cluster = require("cluster");
 var _obj = {};
+var _logStream = null; // persistent write stream to avoid leaking file descriptors
 
 /**
  * Pairs of colors that cannot be foreground/backgrounsd together because it's too hard to read
@@ -87,7 +88,16 @@ _obj.log = function(argsArray, colorFunction) {
     var str = util.format.apply(util, argsArray).replace(/\\/, os.EOL);
     if(_obj.server && _obj.server.logging) {
         _obj.filename = (_obj.filename || ("output/logs/log-" + _obj.server.name.replace(/ /g, ".") + "-" + utilities.momentString() + ".txt"));
-        fs.appendFile(_obj.filename, str + os.EOL);
+        if(!_logStream) {
+            _logStream = fs.createWriteStream(_obj.filename, { flags: "a" });
+            _logStream.on("error", function(err) {
+                /* eslint-disable no-console */
+                console.error("Log stream error:", err);
+                /* eslint-enable no-console */
+                _logStream = null; // reset so next log call creates a new stream
+            });
+        }
+        _logStream.write(str + os.EOL);
     }
 
     if(_obj.server) {
