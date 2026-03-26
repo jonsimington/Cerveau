@@ -1,5 +1,7 @@
-FROM node:latest
+FROM node:18-alpine
 LABEL maintainer "siggame@mst.edu"
+
+RUN apk add --no-cache git
 
 ADD . cerveau
 WORKDIR cerveau

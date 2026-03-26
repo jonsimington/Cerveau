@@ -162,6 +162,11 @@ var GameLogger = Class({
             var strings = [];
             var readStream = fs.createReadStream(gamelogPath)
                 .pipe(zlib.createGunzip()) // Un-Gzip
+                .on("error", function(err) {
+                    callback(undefined, {
+                        "error": "Error decompressing gamelog: " + err.message,
+                    });
+                })
                 .on("data", function(buffer) {
                     strings.push(buffer.toString("utf8"));
                 })
