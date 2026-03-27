@@ -157,6 +157,16 @@ var Session = Class({
             }
         });
 
+        this._worker.on("exit", function() {
+            if(!self.over) {
+                // Worker exited without sending gamelog (crash or IPC failure).
+                // Mark session as over so the status endpoint doesn't report it as "running" forever.
+                log.warning("Worker exited without sending gamelog for session " + self.id + ". Marking session as over.");
+                self.over = true;
+                delete self._worker;
+            }
+        });
+
         this._worker.session = this;
     },
 

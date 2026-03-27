@@ -212,7 +212,10 @@ const Lobby = Class(Server, {
                 session = undefined;
             }
             else if(session.isOver()) {
-                delete this._sessions[gameName][id]; // we will create a new session below to replace this one
+                // Don't delete the over session — go-battle may still be polling
+                // its /status endpoint for gamelog retrieval. Use a fresh ID for
+                // the new session so we don't shadow the completed one.
+                id = String(this._nextGameNumber++);
                 session = undefined;
             }
         }
@@ -413,6 +416,16 @@ const Lobby = Class(Server, {
      */
     _sessionOver: function(session) {
         delete this._runningSessions[session.gameName + session.id];
+
+        // Delay cleanup of _sessions so the /status endpoint remains available
+        // for go-battle's gamelog polling (up to ~5 min after game ends).
+        // 10 minutes is well beyond the polling budget.
+        var sessions = this._sessions;
+        setTimeout(function() {
+            if(sessions[session.gameName]) {
+                delete sessions[session.gameName][session.id];
+            }
+        }, 10 * 60 * 1000);
 
         if(this._isShuttingDown && Object.keys(this._runningSessions).length === 0) {
             log("Final game session exited. Shutdown complete.");
