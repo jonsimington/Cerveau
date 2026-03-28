@@ -181,7 +181,7 @@ const Lobby = Class(Server, {
      * @param {string} [id] - basically a room id. Specifying an id can be used to join other players on purpose. "*" will join you to any open session or a new one, and "new" will always give you a brand new room even if there are open ones.
      * @returns {Session} the game of gameName and id. If one does not exists a new instance will be created
      */
-    _getOrCreateSession: function(gameName, id) {
+    _getOrCreateSession: function(gameName, id, spectating) {
         var session; // the session we are trying to get
 
         if(id !== "new") {
@@ -208,8 +208,11 @@ const Lobby = Class(Server, {
 
         if(session) {
             if(session.isRunning()) {
-                id = "new";
-                session = undefined;
+                if(!spectating) {
+                    id = "new";
+                    session = undefined;
+                }
+                // spectators can join running sessions — handled in _clientSentPlay
             }
             else if(session.isOver()) {
                 // Don't delete the over session — go-battle may still be polling
@@ -280,7 +283,20 @@ const Lobby = Class(Server, {
             username: data.playerName,
             password: data.password,
             success: function() {
-                var session = self._getOrCreateSession(data.gameName, data.requestedSession);
+                var session = self._getOrCreateSession(data.gameName, data.requestedSession, Boolean(data.spectating));
+
+                // Handle late-joining spectators for already-running sessions
+                if(session.isRunning() && data.spectating) {
+                    client.setInfo({
+                        name: data.playerName,
+                        type: data.clientType,
+                        spectating: true,
+                        metaDeltas: Boolean(data.metaDeltas),
+                    });
+                    session.addLateSpectator(client);
+                    return;
+                }
+
                 var playerIndex = parseInt(data.playerIndex);
 
                 if(playerIndex && playerIndex < 0 || playerIndex >= session.numberOfPlayers) { // then the index is out of the range

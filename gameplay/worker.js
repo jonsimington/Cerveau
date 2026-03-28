@@ -45,6 +45,10 @@ process.on("message", function(message, handler) {
 
         socketIndex++;
     }
+    else if(message && message.type === "late-spectator") {
+        // A spectator joined after the game started — wire them up mid-game
+        instance.addLateSpectator(handler, message.info.connectionType, message.info);
+    }
 });
 
 process.once("uncaughtException", function(err) {

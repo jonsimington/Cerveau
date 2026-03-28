@@ -427,6 +427,42 @@ var Instance = Class(Server, {
             losers: losers,
         };
     },
+
+    /**
+     * Adds a spectator that joined after the game started.
+     * Sends the full delta history so Viseur can reconstruct the current game state,
+     * then subscribes the client to all future deltas.
+     *
+     * @param {net.Socket} socket - the raw net.Socket transferred via IPC
+     * @param {string} connectionType - "WS" or "TCP"
+     * @param {Object} info - spectator info (name, type, spectating, metaDeltas)
+     */
+    addLateSpectator: function(socket, connectionType, info) {
+        var client = Server.addSocket.call(this, socket, connectionType, info);
+
+        client.getNetSocket().setNoDelay(true);
+
+        // Tell the client which session it joined (Viseur needs this before "start")
+        client.send("lobbied", {
+            gameName: this.game.name,
+            gameSession: String(this.game.session),
+            constants: constants.shared,
+        });
+
+        // Tell the client the game is already in progress
+        client.send("start", { playerID: null });
+
+        // Replay every accumulated delta so Viseur can build the full game state
+        for(var i = 0; i < this._deltas.length; i++) {
+            var delta = this._deltas[i];
+            if(client.metaDeltas) {
+                client.send("delta", delta);
+            }
+            else {
+                client.send("delta", delta.game);
+            }
+        }
+    },
 });
 
 module.exports = Instance;

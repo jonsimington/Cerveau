@@ -109,6 +109,31 @@ var Session = Class({
     },
 
     /**
+     * Called by the lobby when a spectator tries to join an already-running session.
+     * Transfers the client's socket to the game worker thread so the instance can
+     * send the accumulated delta history and subscribe them to future updates.
+     *
+     * @param {Client} client - the lobby-side client that wants to spectate
+     */
+    addLateSpectator: function(client) {
+        var spectatorInfo = {
+            type: "late-spectator",
+            info: {
+                name: client.name,
+                type: client.type,
+                connectionType: client.connectionType,
+                spectating: true,
+                metaDeltas: client.metaDeltas,
+            },
+        };
+
+        client.stopListeningToSocket();
+        this.lobby.clients.removeElement(client);
+
+        this._worker.send(spectatorInfo, client.getNetSocket());
+    },
+
+    /**
      * This happens when there are enough clients to start the game Instance. We start the on a separate "worker" thread, true multi-threading via cluster
      */
     _threadInstance: function() {
