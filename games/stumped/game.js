@@ -8,7 +8,7 @@ const TiledGame = require(`${__basedir}/gameplay/shared/tiledGame`);
 
 //<<-- Creer-Merge: requires -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
 
-const mathjs = require("mathjs");
+const PHI = (1 + Math.sqrt(5)) / 2; // golden ratio, formerly from mathjs
 const JobStats = require("./jobStats.json");
 
 //<<-- /Creer-Merge: requires -->>
@@ -154,7 +154,7 @@ let Game = Class(TwoPlayerGame, TurnBasedGame, TiledGame, {
         this.maxTurns = data.maxTurns || 500;
 
         this.spawnerHarvestConstant = data.spawnerHarvestConstant || 2;
-        this.lodgeCostConstant = data.lodgeCostConstant || mathjs.phi;
+        this.lodgeCostConstant = data.lodgeCostConstant || PHI;
 
         this.freeBeaversCount = data.freeBeaversCount || 10;
         this.lodgesToWin = data.lodgesToWin || 10;

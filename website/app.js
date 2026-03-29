@@ -1,11 +1,11 @@
 var express = require("express");
-var expressHbs = require("express-handlebars");
+var { engine } = require("express-handlebars");
 var moment = require("moment");
 
 var app = express();
 
 // setup handlebars as the views
-app.engine("hbs", expressHbs({
+app.engine("hbs", engine({
     extname:"hbs",
     defaultLayout:"main.hbs",
     partialsDir: __basedir + "/website/views/partials",

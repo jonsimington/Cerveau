@@ -1,6 +1,5 @@
 const Classe = require("classe");
-const Git = require("simple-git");
-const request = require("request");
+const simpleGit = require("simple-git");
 const hostedGitInfo = require("hosted-git-info");
 
 const log = require("./log");
@@ -38,7 +37,7 @@ const Updater = Classe({
         this._githubURL = `http://api.github.com/repos/${hostedInfo.user}/${hostedInfo.project}/commits`;
 
         // our git repo will be... ourself!
-        this._git = Git(__basedir);
+        this._git = simpleGit(__basedir);
         this._git.status((err, status) => {
             if(err) {
                 return this._die("Error trying to use Git, is it installed on your system?");
@@ -77,24 +76,26 @@ const Updater = Classe({
      * Does a request to GitHub to check if we are up to date
      */
     _check: function() {
-        request({
-            url: this._githubURL,
+        fetch(this._githubURL, {
             headers: {"User-Agent": "node.js"},
-        }, (err, response, body) => {
-            if(!err && response.statusCode === 200) {
-                const githubCommits = JSON.parse(body);
-                if(githubCommits && githubCommits.length > 0) {
-                    const latestHash = githubCommits[0].sha;
-                    if(!this._commits.has(latestHash)) {
-                        // then we don't have the latest commit on github, so try to autoupdate
-                        this._tryToUpdate();
-                    }
-                    // else, we are up to date
-                }
-                // else commits look wrong... ignore
+        }).then((response) => {
+            if(response.ok) {
+                return response.json();
             }
-            // else there was an error, disregard and try again
-
+            return null;
+        }).then((githubCommits) => {
+            if(githubCommits && githubCommits.length > 0) {
+                const latestHash = githubCommits[0].sha;
+                if(!this._commits.has(latestHash)) {
+                    // then we don't have the latest commit on github, so try to autoupdate
+                    this._tryToUpdate();
+                }
+                // else, we are up to date
+            }
+            // else commits look wrong... ignore
+        }).catch(() => {
+            // there was an error, disregard and try again
+        }).finally(() => {
             // check again later
             this._delayedCheck();
         });

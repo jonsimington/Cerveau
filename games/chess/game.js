@@ -8,6 +8,7 @@ const TurnBasedGame = require(`${__basedir}/gameplay/shared/turnBasedGame`);
 //<<-- Creer-Merge: requires -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
 
 var Chess = require("chess.js").Chess; // a very popular chess framework we will use to run all chess logic. This Game is basically an interface to chess.js
+var SQUARES = require("chess.js").SQUARES;
 
 //<<-- /Creer-Merge: requires -->>
 
@@ -160,8 +161,8 @@ let Game = Class(TwoPlayerGame, TurnBasedGame, {
             k: "King",
         };
 
-        for(var i = 0; i < this.chess.SQUARES.length; i++) {
-            var square = this.chess.SQUARES[i];
+        for(var i = 0; i < SQUARES.length; i++) {
+            var square = SQUARES[i];
 
             var info = this.chess.get(square);
 
